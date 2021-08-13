@@ -1,4 +1,5 @@
 // const fetch = require('node-fetch');
+const cartItemsSectionClassName = '.cart__items';
 
 function createProductImageElement(imageSource) {
   const img = document.createElement('img');
@@ -30,10 +31,19 @@ function getSkuFromProductItem(item) {
   return item.querySelector('span.item__sku').innerText;
 }
 
-function cartItemClickListener(event) {
-  const cart = document.querySelector('.cart__items');
-  const cartItem = event.target;
-  cart.removeChild(cartItem);
+function saveAllLocalStorage(cartItemsSection) {
+  localStorage.clear();
+  const cartItems = cartItemsSection.children;
+  const cartArray = [...cartItems].map((item) => item.innerText); // referencia: https://stackoverflow.com/questions/222841/most-efficient-way-to-convert-an-htmlcollection-to-an-array
+  localStorage.setItem('cart', JSON.stringify(cartArray));
+}
+
+function cartItemClickListener(param) {
+  const isEvent = param instanceof Event; // testa se o parametro veio de um evento de click. referencia: https://stackoverflow.com/questions/1458894/how-to-determine-if-javascript-object-is-an-event
+  const cartItem = isEvent ? param.target : param;
+  const cartItemsSection = document.querySelector(cartItemsSectionClassName);
+  cartItemsSection.removeChild(cartItem);
+  saveAllLocalStorage(cartItemsSection);
 }
 
 function createCartItemElement({ sku, name, salePrice }) {
@@ -58,17 +68,32 @@ async function getSalePriceByID(productID) {
   return product.price;
 }
 
+function getCartFromLocalStorage() {
+  const cart = JSON.parse(localStorage.getItem('cart'));
+  const cartItemsSection = document.querySelector('.cart__items');
+  if (cart) {
+    cart.forEach((item) => {
+      const li = document.createElement('li');
+      li.innerText = item;
+      li.className = 'cart__item';
+      li.addEventListener('click', cartItemClickListener);
+      cartItemsSection.append(li);
+    });
+  }
+}
+
 function addToCartEventListener() {
-  const buttons = document.querySelectorAll('.item__add');
-  buttons.forEach((button) => button.addEventListener('click', async () => {
+  const buttonsAddToCart = document.querySelectorAll('.item__add');
+  buttonsAddToCart.forEach((button) => button.addEventListener('click', async () => {
     const buttonParent = button.parentNode;
     const name = buttonParent.childNodes[1].innerText;
     const sku = buttonParent.firstChild.innerText;
     const salePrice = await getSalePriceByID(sku);
     const productModel = { sku, name, salePrice };
     const cartItemElement = createCartItemElement(productModel);
-    const cart = document.querySelector('.cart__items');
-    cart.appendChild(cartItemElement);
+    const cartItemsSection = document.querySelector(cartItemsSectionClassName);
+    cartItemsSection.appendChild(cartItemElement);
+    saveAllLocalStorage(cartItemsSection);
   }));
 }
 
@@ -87,4 +112,7 @@ async function fetchProductsList() {
   addToCartEventListener();
 }
 
-window.onload = fetchProductsList;
+window.onload = () => {
+  fetchProductsList();
+  getCartFromLocalStorage();
+};
