@@ -38,12 +38,32 @@ function saveAllLocalStorage(cartItemsSection) {
   localStorage.setItem('cart', JSON.stringify(cartArray));
 }
 
+async function getSalePriceByID(productID) {
+  const product = await fetch(`https://api.mercadolibre.com/items/${productID}`)
+  .then((value) => value.json());
+  return product.price;
+}
+
+function updateCartTotalPrice() {
+  const cartItemsSection = document.querySelector(cartItemsSectionClassName).children;
+  const isEmpty = cartItemsSection === null;
+  const totalPriceElement = document.querySelector('.total-price');
+  const regex = /\$\d*.\d*/g;
+  const totalPrice = [...cartItemsSection].reduce((acc, item) => {
+    let price = item.innerText.match(regex)[0];
+    price = +price.replace('$', '');
+    return acc + price;
+  }, 0);
+  totalPriceElement.innerText = isEmpty ? 0 : Number(totalPrice);
+}
+
 function cartItemClickListener(param) {
   const isEvent = param instanceof Event; // testa se o parametro veio de um evento de click. referencia: https://stackoverflow.com/questions/1458894/how-to-determine-if-javascript-object-is-an-event
   const cartItem = isEvent ? param.target : param;
   const cartItemsSection = document.querySelector(cartItemsSectionClassName);
   cartItemsSection.removeChild(cartItem);
   saveAllLocalStorage(cartItemsSection);
+  updateCartTotalPrice();
 }
 
 function createCartItemElement({ sku, name, salePrice }) {
@@ -62,15 +82,9 @@ function getProductModel(product) {
   };
 }
 
-async function getSalePriceByID(productID) {
-  const product = await fetch(`https://api.mercadolibre.com/items/${productID}`)
-  .then((value) => value.json());
-  return product.price;
-}
-
 function getCartFromLocalStorage() {
   const cart = JSON.parse(localStorage.getItem('cart'));
-  const cartItemsSection = document.querySelector('.cart__items');
+  const cartItemsSection = document.querySelector(cartItemsSectionClassName);
   if (cart) {
     cart.forEach((item) => {
       const li = document.createElement('li');
@@ -94,6 +108,7 @@ function addToCartEventListener() {
     const cartItemsSection = document.querySelector(cartItemsSectionClassName);
     cartItemsSection.appendChild(cartItemElement);
     saveAllLocalStorage(cartItemsSection);
+    updateCartTotalPrice();
   }));
 }
 
@@ -115,4 +130,5 @@ async function fetchProductsList() {
 window.onload = () => {
   fetchProductsList();
   getCartFromLocalStorage();
+  updateCartTotalPrice();
 };
