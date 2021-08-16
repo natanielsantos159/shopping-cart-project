@@ -1,5 +1,5 @@
 // const fetch = require('node-fetch');
-const cartItemsSectionClassName = '.cart__items';
+const cartSectionClassName = '.cart__items';
 
 function createProductImageElement(imageSource) {
   const img = document.createElement('img');
@@ -45,7 +45,7 @@ async function getSalePriceByID(productID) {
 }
 
 function updateCartTotalPrice() {
-  const cartItemsSection = document.querySelector(cartItemsSectionClassName).children;
+  const cartItemsSection = document.querySelector(cartSectionClassName).children;
   const isEmpty = cartItemsSection === null;
   const totalPriceElement = document.querySelector('.total-price');
   const regex = /\$\d*.\d*/g;
@@ -60,7 +60,7 @@ function updateCartTotalPrice() {
 function cartItemClickListener(param) {
   const isEvent = param instanceof Event; // testa se o parametro veio de um evento de click. referencia: https://stackoverflow.com/questions/1458894/how-to-determine-if-javascript-object-is-an-event
   const cartItem = isEvent ? param.target : param;
-  const cartItemsSection = document.querySelector(cartItemsSectionClassName);
+  const cartItemsSection = document.querySelector(cartSectionClassName);
   cartItemsSection.removeChild(cartItem);
   saveAllLocalStorage(cartItemsSection);
   updateCartTotalPrice();
@@ -84,7 +84,7 @@ function getProductModel(product) {
 
 function getCartFromLocalStorage() {
   const cart = JSON.parse(localStorage.getItem('cart'));
-  const cartItemsSection = document.querySelector(cartItemsSectionClassName);
+  const cartItemsSection = document.querySelector(cartSectionClassName);
   if (cart) {
     cart.forEach((item) => {
       const li = document.createElement('li');
@@ -105,7 +105,7 @@ function addToCartEventListener() {
     const salePrice = await getSalePriceByID(sku);
     const productModel = { sku, name, salePrice };
     const cartItemElement = createCartItemElement(productModel);
-    const cartItemsSection = document.querySelector(cartItemsSectionClassName);
+    const cartItemsSection = document.querySelector(cartSectionClassName);
     cartItemsSection.appendChild(cartItemElement);
     saveAllLocalStorage(cartItemsSection);
     updateCartTotalPrice();
@@ -131,4 +131,11 @@ window.onload = () => {
   fetchProductsList();
   getCartFromLocalStorage();
   updateCartTotalPrice();
+
+  const clearCartButton = document.querySelector('.empty-cart');
+
+  clearCartButton.addEventListener('click', () => { 
+    document.querySelector(cartSectionClassName).innerHTML = '';
+    updateCartTotalPrice();
+  });
 };
