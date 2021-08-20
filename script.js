@@ -101,7 +101,7 @@ function addToCartEventListener() {
   buttonsAddToCart.forEach((button) => button.addEventListener('click', async () => {
     const buttonParent = button.parentNode;
     const name = buttonParent.childNodes[1].innerText;
-    const sku = buttonParent.firstChild.innerText;
+    const sku = getSkuFromProductItem(buttonParent);
     const salePrice = await getSalePriceByID(sku);
     const productModel = { sku, name, salePrice };
     const cartItemElement = createCartItemElement(productModel);
@@ -117,10 +117,11 @@ async function fetchProductsList() {
   .then((value) => value.json())
   .then((json) => json.results);
 
+  const itemsSection = document.querySelector('.items');
+  itemsSection.innerHTML = '';
   results.forEach((product) => {
     const productModel = getProductModel(product);
     const item = createProductItemElement(productModel);
-    const itemsSection = document.querySelector('.items');
     itemsSection.appendChild(item); 
   });
 
